@@ -8,6 +8,7 @@ import json
 import struct
 import threading
 import http.server
+import socket
 from urllib.parse import urlparse
 from typing import Any, Callable, get_type_hints, TypedDict, Optional, Annotated, TypeVar, Generic, NotRequired
 
@@ -190,8 +191,11 @@ class MCPHTTPServer(http.server.HTTPServer):
     allow_reuse_address = False
 
 class Server:
-    HOST = "localhost"
-    PORT = 13337
+    HOST = os.environ.get("IDA_MCP_HOST", "localhost")
+    try:
+        PORT = int(os.environ.get("IDA_MCP_PORT", "13337"))
+    except Exception:
+        PORT = 13337
 
     def __init__(self):
         self.server = None
@@ -202,6 +206,18 @@ class Server:
         if self.running:
             print("[MCP] Server is already running")
             return
+
+        # port가 사용중인지 체크하고 사용중이면 +1 해서 다시 체크
+        while True:
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.bind((Server.HOST, Server.PORT))
+                    break
+            except OSError as e:
+                if e.errno == 98 or e.errno == 10048 or e.errno == 48:  # Port already in use (Linux/Windows/MacOS)
+                    Server.PORT += 1
+                else:
+                    raise
 
         self.server_thread = threading.Thread(target=self._run_server, daemon=True)
         self.running = True
@@ -1862,6 +1878,16 @@ class MCP(idaapi.plugin_t):
         return idaapi.PLUGIN_KEEP
 
     def run(self, args):
+        # Allow runtime override of host/port via environment variables
+        try:
+            host = os.environ.get("IDA_MCP_HOST")
+            port_env = os.environ.get("IDA_MCP_PORT")
+            if host:
+                Server.HOST = host
+            if port_env:
+                Server.PORT = int(port_env)
+        except Exception:
+            pass
         self.server.start()
 
     def term(self):

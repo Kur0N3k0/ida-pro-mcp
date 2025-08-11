@@ -409,11 +409,14 @@ def install_ida_plugin(*, uninstall: bool = False, quiet: bool = False):
     else:
         ida_plugin_folder = os.path.join(os.path.expanduser("~"), ".idapro", "plugins")
     plugin_destination = os.path.join(ida_plugin_folder, "mcp-plugin.py")
+    mmcp_destination = os.path.join(ida_plugin_folder, "mmcp-plugin.py")
     if uninstall:
         if not os.path.exists(plugin_destination):
             print(f"Skipping IDA plugin uninstall\n  Path: {plugin_destination} (not found)")
             return
         os.remove(plugin_destination)
+        if os.path.exists(mmcp_destination):
+            os.remove(mmcp_destination)
         if not quiet:
             print(f"Uninstalled IDA plugin\n  Path: {plugin_destination}")
     else:
@@ -439,6 +442,17 @@ def install_ida_plugin(*, uninstall: bool = False, quiet: bool = False):
 
             if not quiet:
                 print(f"Installed IDA Pro plugin (IDA restart required)\n  Plugin: {plugin_destination}")
+        # Also install mmcp helper UI
+        mmcp_src = os.path.join(SCRIPT_DIR, "mmcp-plugin.py")
+        if os.path.exists(mmcp_src):
+            try:
+                if os.path.lexists(mmcp_destination):
+                    os.remove(mmcp_destination)
+                os.symlink(mmcp_src, mmcp_destination)
+            except OSError:
+                shutil.copy(mmcp_src, mmcp_destination)
+            if not quiet:
+                print(f"Installed IDA MMCP helper plugin (IDA restart required)\n  Plugin: {mmcp_destination}")
 
 def main():
     global ida_host, ida_port

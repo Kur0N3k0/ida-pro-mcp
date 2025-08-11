@@ -87,7 +87,8 @@ _Note_: You need to load a binary in IDA before the plugin menu will show up.
 
 LLMs are prone to hallucinations and you need to be specific with your prompting. For reverse engineering the conversion between integers and bytes are especially problematic. Below is a minimal example prompt, feel free to start a discussion or open an issue if you have good results with a different prompt:
 
-> Your task is to analyze a crackme in IDA Pro. You can use the MCP tools to retrieve information. In general use the following strategy:
+> Your task is to analyze a CTF challenge in IDA Pro. You can use the MCP tools to retrieve information. All tools must execute using proxy_call except session tools.
+> In general use the following strategy:
 > - Inspect the decompilation and add comments with your findings
 > - Rename variables to more sensible names
 > - Change the variable and argument types if necessary (especially pointer and array types)
@@ -97,6 +98,8 @@ LLMs are prone to hallucinations and you need to be specific with your prompting
 > - Do not attempt brute forcing, derive any solutions purely from the disassembly and simple python scripts
 > - Create a report.md with your findings and steps taken at the end
 > - When you find a solution, prompt to user for feedback with the password you found
+> - If more details for analyze, you can switch session and analyze depended binaries.
+
 
 This prompt was just the first experiment, please share if you found ways to improve the output!
 
